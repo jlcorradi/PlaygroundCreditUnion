@@ -1,0 +1,7 @@
+vscode/
+.idea/
+/.idea/
+.DS_STORE/
+/.DS_STORE/
+/target/
+target/
