@@ -31,52 +31,52 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-    private final RsaKeyProperties rsaKeys;
+  private final RsaKeyProperties rsaKeys;
 
-    @Bean
-    UserDetailsService userDetailsService() {
+  @Bean
+  UserDetailsService userDetailsService() {
 
-        return new InMemoryUserDetailsManager(
-                User.withUsername("jlcorradi@gmail.com")
-                        .password("{noop}password")
-                        .authorities(AuthorityUtils.createAuthorityList("USER", "ROOT", "ADMIN"))
-                        .build()
-        );
-    }
+    return new InMemoryUserDetailsManager(
+        User.withUsername("jlcorradi@gmail.com")
+            .password("{noop}password")
+            .authorities(AuthorityUtils.createAuthorityList("USER", "ROOT", "ADMIN"))
+            .build()
+    );
+  }
 
-    @Bean
-    SecurityFilterChain getHttpSecurity(HttpSecurity http) throws Exception {
-        return http
-                .csrf(AbstractHttpConfigurer::disable)
-                .httpBasic(Customizer.withDefaults())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-                .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
-                        .requestMatchers("/api/v1/auth").permitAll()
-                        .requestMatchers("/api/v1/public/**").permitAll()
-                        .requestMatchers("/api/v1/dashboard/balance").hasAnyAuthority("SCOPE_USER")
-                        .anyRequest().authenticated()
-                ).build();
-    }
+  @Bean
+  SecurityFilterChain getHttpSecurity(HttpSecurity http) throws Exception {
+    return http
+        .csrf(AbstractHttpConfigurer::disable)
+        .httpBasic(Customizer.withDefaults())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+        .authorizeHttpRequests(authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
+            .requestMatchers("/api/v1/auth").permitAll()
+            .requestMatchers("/api/v1/public/**").permitAll()
+            .requestMatchers("/api/v1/dashboard/balance").hasAnyAuthority("SCOPE_USER")
+            .anyRequest().authenticated()
+        ).build();
+  }
 
-    @Bean
-    JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(rsaKeys.publicKey()).build();
-    }
+  @Bean
+  JwtDecoder jwtDecoder() {
+    return NimbusJwtDecoder.withPublicKey(rsaKeys.publicKey()).build();
+  }
 
-    @Bean
-    JwtEncoder jwtEncoder() {
-        JWK jwk = new RSAKey.Builder(rsaKeys.publicKey()).privateKey(rsaKeys.privateKey()).build();
-        JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
-        return new NimbusJwtEncoder(jwks);
-    }
+  @Bean
+  JwtEncoder jwtEncoder() {
+    JWK jwk = new RSAKey.Builder(rsaKeys.publicKey()).privateKey(rsaKeys.privateKey()).build();
+    JWKSource<SecurityContext> jwks = new ImmutableJWKSet<>(new JWKSet(jwk));
+    return new NimbusJwtEncoder(jwks);
+  }
 
-    // We need to provide this for manual authentication to work. Spring does not spin up one automatically.
-    @Bean
-    AuthenticationManager authenticationManager() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService());
-        return new ProviderManager(provider);
-    }
+  // We need to provide this for manual authentication to work. Spring does not spin up one automatically.
+  @Bean
+  AuthenticationManager authenticationManager() {
+    DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+    provider.setUserDetailsService(userDetailsService());
+    return new ProviderManager(provider);
+  }
 
 }
